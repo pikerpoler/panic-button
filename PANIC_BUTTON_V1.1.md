@@ -14,6 +14,8 @@ V1.1 combines:
 - A 10% per-boot "Mandarin localization glitch" that persists for the entire boot session.
 - Build-time SAM-style robotic speech generation stored directly in ESP8266 flash.
 
+This document is the complete behavior specification. v0.2 and v1.0 are historical context and are not required to implement V1.1. Follow this file where an older description would disagree with it.
+
 The intended user experience remains extremely simple:
 
 ```text
@@ -24,7 +26,11 @@ All complexity belongs in the hardware and firmware.
 
 ---
 
+
+
 # 1. Final hardware platform
+
+
 
 ## 1.1 Microcontroller
 
@@ -69,7 +75,11 @@ A genuine/compatible D1 Mini with 4 MB flash is the reference target.
 
 ---
 
+
+
 # 2. Audio architecture
+
+
 
 ## 2.1 Audio amplifier
 
@@ -131,7 +141,11 @@ Do NOT connect either speaker terminal to GND.
 
 ---
 
+
+
 # 3. Speech strategy
+
+
 
 ## 3.1 Do not run SAM synchronously during normal runtime
 
@@ -191,6 +205,8 @@ speech_panic_zh[]
 speech_overload_zh[]
 ```
 
+
+
 ## 3.3 Playback implementation
 
 Use ESP8266Audio:
@@ -216,6 +232,8 @@ void updateAudio() {
 No audio playback routine may block the main loop for the full duration of a phrase.
 
 ---
+
+
 
 # 4. Per-device naming
 
@@ -260,6 +278,8 @@ No runtime menu, EEPROM configuration, Wi-Fi configuration page, or additional s
 
 ---
 
+
+
 # 5. Build workflow for names and speech
 
 The repository must include a helper tool that regenerates speech assets from `device_config.h`.
@@ -301,7 +321,11 @@ Generated audio files must not need manual editing.
 
 ---
 
+
+
 # 6. Normal English session speech
+
+
 
 ## Boot
 
@@ -332,6 +356,8 @@ PANIC!
 PANIC!
 ```
 
+
+
 ## Level 5
 
 Displayed:
@@ -351,7 +377,11 @@ SHUTTING DOWN SYSTEM.
 
 ---
 
+
+
 # 7. Mandarin localization-glitch session
+
+
 
 ## 7.1 Selection probability
 
@@ -400,6 +430,8 @@ This probability is exactly:
 
 ---
 
+
+
 # 8. Mandarin-glitch display and speech table
 
 The alternate mode must feel internally consistent.
@@ -412,16 +444,22 @@ The device name remains in Latin characters.
 
 ## 8.1 Display mapping
 
-| State | English mode | Mandarin-glitch mode |
-|---|---|---|
-| Boot | `HELLO WORLD` + device name | `系统启动` + device name |
-| Level 0 | `ALL CLEAR` | `一切正常` |
-| Level 1 | `PANIC` | `恐慌` |
-| Level 2 | `PANIC!` | `恐慌!` |
-| Level 3 | `PANIC!!` | `恐慌!!` |
-| Level 4 | `PANIC!!!` | `恐慌!!!` |
-| Level 5 | `PANIC OVERLOAD` | `恐慌过载` |
-| Lockout | `SYSTEM OFFLINE` | `系统离线` |
+
+| State   | English mode                | Mandarin-glitch mode |
+| ------- | --------------------------- | -------------------- |
+| Boot    | `HELLO WORLD` + device name | `系统启动` + device name |
+| Level 0 | `ALL CLEAR`                 | `一切正常`               |
+| Level 1 | `PANIC`                     | `恐慌`                 |
+| Level 2 | `PANIC!`                    | `恐慌!`                |
+| Level 3 | `PANIC!!`                   | `恐慌!!`               |
+| Level 4 | `PANIC!!!`                  | `恐慌!!!`              |
+| Level 5 | `PANIC` / `OVERLOAD`        | `恐慌过载`               |
+| Lockout | `SYSTEM` / `OFFLINE`        | `系统离线`               |
+
+Level 5 and lockout do not show the device name. The name is spoken in the boot phrase and in the level-5 phrase only. English level 5 and English lockout are two lines each. Mandarin level 5 is the single line `恐慌过载`. Mandarin lockout is the single line `系统离线`.
+
+
+
 
 ## 8.2 Mandarin-glitch boot speech
 
@@ -497,6 +535,8 @@ Replace `SHLORP` with `DEVICE_NAME_SPEECH`.
 
 ---
 
+
+
 # 9. OLED display hardware
 
 Use:
@@ -531,6 +571,8 @@ Typical PCB size is approximately:
 27 mm x 27 mm
 ```
 
+
+
 ## OLED supply
 
 Power the OLED from:
@@ -544,6 +586,8 @@ not 5 V.
 This prevents an OLED module with onboard I2C pull-ups from pulling SDA/SCL above the ESP8266's 3.3 V logic level.
 
 ---
+
+
 
 # 10. Chinese font support
 
@@ -566,6 +610,8 @@ The selected Chinese strings are fixed, so a subset font is allowed.
 The OLED must correctly display UTF-8 Chinese strings from the table above.
 
 ---
+
+
 
 # 11. Physical panic button
 
@@ -605,6 +651,8 @@ latching/self-locking button
 The button carries only a logic signal, so its high current rating is irrelevant.
 
 ---
+
+
 
 # 12. LEDs
 
@@ -648,6 +696,8 @@ LED cathode -> GND
 
 ---
 
+
+
 # 13. Active buzzer
 
 Use:
@@ -673,7 +723,11 @@ The active buzzer allows simple digital ON/OFF control while I2S speech runs.
 
 ---
 
+
+
 # 14. Power supply
+
+
 
 ## 14.1 Per-device supply
 
@@ -722,6 +776,8 @@ Use a data-capable cable so the same cable can be used for firmware flashing.
 
 ---
 
+
+
 # 15. Power wiring inside the device
 
 USB powers the D1 Mini.
@@ -769,6 +825,8 @@ A 16 V part is also acceptable.
 
 ---
 
+
+
 # 16. Final ESP8266 pin map
 
 Reference board:
@@ -777,31 +835,45 @@ Reference board:
 D1 Mini ESP8266
 ```
 
+
+
 ## I2S audio
 
 These are the ESP8266Audio hardware-I2S pins:
 
-| Function | D1 Mini label | ESP8266 GPIO |
-|---|---:|---:|
-| MAX98357A LRC / WS | D4 | GPIO2 |
-| MAX98357A BCLK | D8 | GPIO15 |
-| MAX98357A DIN | RX | GPIO3 |
+
+| Function           | D1 Mini label | ESP8266 GPIO |
+| ------------------ | ------------- | ------------ |
+| MAX98357A LRC / WS | D4            | GPIO2        |
+| MAX98357A BCLK     | D8            | GPIO15       |
+| MAX98357A DIN      | RX            | GPIO3        |
+
+
+
 
 ## OLED
 
+
 | Function | D1 Mini label | ESP8266 GPIO |
-|---|---:|---:|
-| OLED SCL | D1 | GPIO5 |
-| OLED SDA | D2 | GPIO4 |
+| -------- | ------------- | ------------ |
+| OLED SCL | D1            | GPIO5        |
+| OLED SDA | D2            | GPIO4        |
+
+
+
 
 ## Controls
 
-| Function | D1 Mini label | ESP8266 GPIO |
-|---|---:|---:|
-| Panic button | D5 | GPIO14 |
-| Active buzzer SIGNAL | D6 | GPIO12 |
-| Red LED 1 | D7 | GPIO13 |
-| Red LED 2 | D0 | GPIO16 |
+
+| Function             | D1 Mini label | ESP8266 GPIO |
+| -------------------- | ------------- | ------------ |
+| Panic button         | D5            | GPIO14       |
+| Active buzzer SIGNAL | D6            | GPIO12       |
+| Red LED 1            | D7            | GPIO13       |
+| Red LED 2            | D0            | GPIO16       |
+
+
+
 
 ## Button wiring
 
@@ -824,6 +896,8 @@ LOW  = pressed
 
 ---
 
+
+
 # 17. Important ESP8266 pin restrictions
 
 Do not casually move signals onto boot-strapping pins.
@@ -845,6 +919,8 @@ D0/GPIO16 is used only as a simple digital LED output.
 It does not need PWM or interrupts.
 
 ---
+
+
 
 # 18. Enclosure
 
@@ -876,6 +952,8 @@ Do not choose a shallower box unless component clearances have been physically c
 
 ---
 
+
+
 # 19. Enclosure cutouts
 
 The enclosure is intentionally modified.
@@ -889,6 +967,8 @@ Make:
 ```text
 24 mm round hole
 ```
+
+
 
 ### OLED window
 
@@ -909,6 +989,8 @@ Two holes:
 ```text
 5 mm diameter each
 ```
+
+
 
 ### Speaker grille
 
@@ -938,6 +1020,8 @@ Measure the actual USB plug/board before cutting.
 Mount the D1 Mini so a normal USB plug can be inserted without opening the enclosure.
 
 ---
+
+
 
 # 20. Internal mechanical construction
 
@@ -972,6 +1056,8 @@ The OLED, button, speaker, and LEDs are panel-mounted and wired back to the perf
 
 ---
 
+
+
 # 21. Development breadboard
 
 Only ONE solderless breadboard is required for developing the first unit.
@@ -999,6 +1085,8 @@ finished unit -> soldered perfboard
 
 ---
 
+
+
 # 22. Additional wiring/assembly consumables
 
 Required/shared across the four builds:
@@ -1016,6 +1104,8 @@ Search:
 ```text
 26AWG silicone hookup wire kit
 ```
+
+
 
 ## Pin headers
 
@@ -1047,30 +1137,36 @@ Hot glue may be used for strain relief, but should not be the only method holdin
 
 ---
 
+
+
 # 23. Complete hardware BOM — per machine
 
 Each finished PANIC BUTTON requires:
 
-| Qty | Part | Exact requirement |
-|---:|---|---|
-| 1 | ESP8266 board | D1 Mini, ESP-12F/ESP8266EX, 4 MB flash |
-| 1 | OLED | 0.96", SSD1306, 128x64, I2C, 4-pin, 3.3 V logic |
-| 1 | Audio amp | MAX98357A I2S mono Class-D breakout |
-| 1 | Speaker | 40 mm, 4 ohm, 3 W |
-| 1 | Panic button | 24 mm red arcade button, momentary NO, screw-in |
-| 1 | Buzzer | Active buzzer module, 3.3–5 V, high-level trigger |
-| 2 | LEDs | 5 mm red diffused |
-| 2 | LED resistors | 220 ohm, 1/4 W |
-| 1 | Power capacitor | 470 uF, >=10 V electrolytic |
-| 1 | Perfboard | 40x60 mm, 2.54 mm pitch |
-| 1 | Enclosure | ABS, approx. 100x60x35 mm |
-| 1 | USB cable | matching board connector, data-capable |
-| 1 | Wall power supply | regulated 5 V / >=2 A USB |
-| as needed | Wire | 26 AWG stranded hookup wire |
-| as needed | Heat shrink | 2–4 mm |
-| as needed | M2 hardware | standoffs/screws/nuts |
+
+| Qty       | Part              | Exact requirement                                 |
+| --------- | ----------------- | ------------------------------------------------- |
+| 1         | ESP8266 board     | D1 Mini, ESP-12F/ESP8266EX, 4 MB flash            |
+| 1         | OLED              | 0.96", SSD1306, 128x64, I2C, 4-pin, 3.3 V logic   |
+| 1         | Audio amp         | MAX98357A I2S mono Class-D breakout               |
+| 1         | Speaker           | 40 mm, 4 ohm, 3 W                                 |
+| 1         | Panic button      | 24 mm red arcade button, momentary NO, screw-in   |
+| 1         | Buzzer            | Active buzzer module, 3.3–5 V, high-level trigger |
+| 2         | LEDs              | 5 mm red diffused                                 |
+| 2         | LED resistors     | 220 ohm, 1/4 W                                    |
+| 1         | Power capacitor   | 470 uF, >=10 V electrolytic                       |
+| 1         | Perfboard         | 40x60 mm, 2.54 mm pitch                           |
+| 1         | Enclosure         | ABS, approx. 100x60x35 mm                         |
+| 1         | USB cable         | matching board connector, data-capable            |
+| 1         | Wall power supply | regulated 5 V / >=2 A USB                         |
+| as needed | Wire              | 26 AWG stranded hookup wire                       |
+| as needed | Heat shrink       | 2–4 mm                                            |
+| as needed | M2 hardware       | standoffs/screws/nuts                             |
+
 
 ---
+
+
 
 # 24. Shopping list — four finished machines
 
@@ -1108,6 +1204,8 @@ Recommended purchase practice:
 
 ---
 
+
+
 # 25. Basic assembly tools
 
 Not part of each machine, but needed to build the project:
@@ -1135,6 +1233,8 @@ hot glue gun
 for strain relief and securing lightweight internal wiring.
 
 ---
+
+
 
 # 26. Device state machine
 
@@ -1168,6 +1268,8 @@ Level 5 is a terminal overload sequence that leads to lockout.
 
 ---
 
+
+
 # 27. Boot behavior
 
 On every BOOT entry:
@@ -1179,12 +1281,12 @@ On every BOOT entry:
 5. Buzzer OFF.
 6. Run happy LED pattern.
 7. Play corresponding generated boot speech.
-8. Ignore local and remote panic events during BOOT.
-9. When minimum boot duration and speech are both complete:
-   - `panicLevel = 0`
-   - LEDs OFF
-   - enter NORMAL
-   - display level-0 text for current session language.
+8. While that greeting is playing, accept local presses and new remote panic UUIDs, as specified below.
+9. If no panic was accepted, when the minimum boot duration and the boot speech are both complete:
+  - `panicLevel = 0`
+  - LEDs OFF
+  - enter NORMAL
+  - display level-0 text for the current session language.
 
 Suggested minimum boot duration:
 
@@ -1192,7 +1294,32 @@ Suggested minimum boot duration:
 4000 ms
 ```
 
+That minimum applies only when the greeting finishes. An accepted panic does not wait for it.
+
+### Panic during BOOT
+
+The greeting is interruptible. The session language has already been rolled and stays fixed.
+
+A local press, or a received UUID that is not already in the cache, is handled immediately with the same rules as a panic in NORMAL:
+
+- remember the UUID,
+- broadcast it (a new UUID for a local press, the same UUID for a relay),
+- increment the panic level by one,
+- reset the decay timer,
+- stop the boot speech and the happy LED pattern,
+- leave BOOT, and do not return to the greeting afterward.
+
+If the resulting level is 1–4, enter NORMAL, show that level's screen, play that level's panic phrase, and run the buzzer and panic LEDs for `PANIC_PROGRAM_MS`.
+
+If the resulting level is 5, enter `LEVEL5_SEQUENCE` immediately. From that moment the overload show ignores further input, as specified in section 42.
+
+A UUID that is already in the cache is dropped. The greeting continues.
+
+A button hold that began during `LEVEL5_SEQUENCE` or `LOCKOUT` is not a press. It counts only after the button is released and pressed again.
+
 ---
+
+
 
 # 28. Happy boot LED pattern
 
@@ -1218,31 +1345,51 @@ Buzzer remains OFF.
 
 ---
 
+
+
 # 29. Panic level table
+
+
 
 ## English session
 
-| Level | Screen | Buzzer | LEDs | Speech |
-|---:|---|---|---|---|
-| 0 | `ALL CLEAR` | Off | Off | Off |
-| 1 | `PANIC` | Alarm | Normal flash | `PANIC! PANIC! PANIC!` |
-| 2 | `PANIC!` | Alarm | Normal flash | `PANIC! PANIC! PANIC!` |
-| 3 | `PANIC!!` | Alarm | Fast flash | `PANIC! PANIC! PANIC!` |
-| 4 | `PANIC!!!` | Alarm | Fast flash | `PANIC! PANIC! PANIC!` |
-| 5 | `PANIC OVERLOAD` | Sad pattern | Slow flash | overload phrase |
+
+| Level | Screen           | Buzzer      | LEDs         | Speech                 |
+| ----- | ---------------- | ----------- | ------------ | ---------------------- |
+| 0     | `ALL CLEAR`      | Off         | Off          | Off                    |
+| 1     | `PANIC`          | Alarm       | Normal flash | `PANIC! PANIC! PANIC!` |
+| 2     | `PANIC!`         | Alarm       | Normal flash | `PANIC! PANIC! PANIC!` |
+| 3     | `PANIC!!`        | Alarm       | Fast flash   | `PANIC! PANIC! PANIC!` |
+| 4     | `PANIC!!!`       | Alarm       | Fast flash   | `PANIC! PANIC! PANIC!` |
+| 5     | `PANIC OVERLOAD` | Sad pattern | Slow flash   | overload phrase        |
+
+
+
 
 ## Mandarin-glitch session
 
-| Level | Screen | Buzzer | LEDs | Speech cue |
-|---:|---|---|---|---|
-| 0 | `一切正常` | Off | Off | Off |
-| 1 | `恐慌` | Alarm | Normal flash | `KONG HWANG!` x3 |
-| 2 | `恐慌!` | Alarm | Normal flash | `KONG HWANG!` x3 |
-| 3 | `恐慌!!` | Alarm | Fast flash | `KONG HWANG!` x3 |
-| 4 | `恐慌!!!` | Alarm | Fast flash | `KONG HWANG!` x3 |
-| 5 | `恐慌过载` | Sad pattern | Slow flash | alternate overload phrase |
+
+| Level | Screen  | Buzzer      | LEDs         | Speech cue                |
+| ----- | ------- | ----------- | ------------ | ------------------------- |
+| 0     | `一切正常`  | Off         | Off          | Off                       |
+| 1     | `恐慌`    | Alarm       | Normal flash | `KONG HWANG!` x3          |
+| 2     | `恐慌!`   | Alarm       | Normal flash | `KONG HWANG!` x3          |
+| 3     | `恐慌!!`  | Alarm       | Fast flash   | `KONG HWANG!` x3          |
+| 4     | `恐慌!!!` | Alarm       | Fast flash   | `KONG HWANG!` x3          |
+| 5     | `恐慌过载`  | Sad pattern | Slow flash   | alternate overload phrase |
+
+
+The Screen column is what the OLED shows for the whole time the device remains at that level. The screen stays up after the buzzer and LEDs have turned off.
+
+For levels 1–4, Alarm and the LED flash start when an upward event is accepted and run for `PANIC_PROGRAM_MS` (4000 ms), then turn off. They do not stay on for as long as that level is displayed. A later upward event starts them again. Flash speed follows the level just reached: normal flash at levels 1–2, fast flash at levels 3–4.
+
+`PANIC_PROGRAM_MS` does not apply to level 5. The sad buzzer and slow flash run for the whole overload sequence in section 42. Level 0 and lockout keep the buzzer and LEDs off.
+
+Speech for levels 1–4 plays that level's phrase once per upward event. The clip plays through to the end even when that is longer than 4 seconds. The buzzer and LEDs still stop at 4 seconds. A new upward event during either the phrase or the 4-second window restarts the phrase from the beginning and starts a fresh 4-second buzzer and LED run.
 
 ---
+
+
 
 # 30. Panic decay
 
@@ -1266,41 +1413,52 @@ Critical rule:
 DOWNWARD TRANSITIONS ARE SILENT.
 ```
 
-Decay changes:
+Decay changes the internal level and the OLED text for that lower level, in the session language chosen at BOOT. A step from level 2 to level 1 removes one exclamation mark. The last step, from level 1 to level 0, changes the screen from `PANIC` / `恐慌` to `ALL CLEAR` / `一切正常`.
 
-- internal level,
-- display text.
+Decay does not start speech, the buzzer, or the LEDs. It does not restart them, and it does not cut off a panic phrase that is already playing. The buzzer and LEDs stop when `PANIC_PROGRAM_MS` elapses, not when the level decays.
 
-Decay does NOT start:
-
-- speech,
-- buzzer,
-- LED panic animation.
-
-The language of the display remains the session language selected at BOOT.
+Level 5 does not decay. It runs the overload sequence, then lockout, then BOOT.
 
 ---
+
+
 
 # 31. Local physical button flow
 
-Button presses are accepted only in:
+A press is the transition into the pressed state after the button has been seen released. Holding the button does not repeat. Debounce with `BUTTON_DEBOUNCE_MS`.
+
+A hold that began during `LEVEL5_SEQUENCE` or `LOCKOUT` is not a press when BOOT begins. It counts only after a release and a new press.
+
+Presses are accepted in:
 
 ```text
+BOOT
 NORMAL
 ```
 
-When pressed:
+Presses are ignored in `LEVEL5_SEQUENCE` and `LOCKOUT`.
+
+When a press is accepted:
 
 1. debounce,
 2. generate a new 128-bit UUID,
-3. insert UUID into local seen cache,
-4. schedule ESP-NOW broadcast,
+3. insert that UUID into the local seen cache,
+4. schedule an ESP-NOW broadcast of that same UUID,
 5. apply one local panic increment immediately,
-6. reset decay timer.
+6. reset the decay timer,
+7. start this level's speech, buzzer, and LEDs, as specified in section 29.
+
+If the device was in BOOT, leave BOOT as specified in section 27. Do not return to the greeting.
 
 The local device does not wait for network transmission.
 
+A new accepted press while a levels 1–4 phrase or 4-second window is already running restarts the phrase from the beginning and starts a fresh `PANIC_PROGRAM_MS` buzzer and LED run. The flash speed follows the level just reached.
+
+The press that moves the device from level 4 to level 5 is accepted, stored, and broadcast. The overload show then ignores further presses.
+
 ---
+
+
 
 # 32. ESP-NOW network
 
@@ -1338,6 +1496,8 @@ All devices intended to interact must use the same channel.
 
 ---
 
+
+
 # 33. Network packet
 
 Suggested packed payload:
@@ -1368,6 +1528,8 @@ Devices with different group IDs ignore each other.
 
 ---
 
+
+
 # 34. UUID generation
 
 Each physical button press creates one random 128-bit UUID.
@@ -1387,6 +1549,8 @@ Set UUIDv4 version/variant bits if convenient.
 No central server is required.
 
 ---
+
+
 
 # 35. Seen-UUID cache
 
@@ -1418,6 +1582,8 @@ Use a fixed-size ring buffer or equivalent.
 
 ---
 
+
+
 # 36. UUID cache clearing
 
 The UUID cache clears only after the device has remained continuously at:
@@ -1441,11 +1607,15 @@ constexpr uint32_t UUID_CACHE_CLEAR_IDLE_MS = 600000;
 
 Leaving level 0 cancels/resets this timer.
 
-BOOT, overload, or lockout also cancel it.
+BOOT, overload, or lockout also cancel this timer. Cancelling the timer does not erase stored UUIDs.
+
+The cache survives `LEVEL5_SEQUENCE`, `LOCKOUT`, and the BOOT that follows lockout. It lives in RAM, so a power loss clears it. The only timed clear is the 10-minute idle rule above.
 
 After returning to level 0, start a fresh 10-minute timer.
 
 ---
+
+
 
 # 37. Received panic event flow
 
@@ -1456,7 +1626,7 @@ For every received packet:
 3. Validate protocol version.
 4. Validate message type.
 5. Validate group ID.
-6. Verify device is currently in NORMAL.
+6. Verify the device is currently in BOOT or NORMAL. In `LEVEL5_SEQUENCE` or `LOCKOUT`, drop the packet with no increment, no relay, and no cache insert.
 7. Check UUID cache.
 
 If UUID already exists:
@@ -1469,6 +1639,8 @@ No relay.
 
 No increment.
 
+During BOOT, a duplicate also leaves the greeting running.
+
 If UUID is new:
 
 ```text
@@ -1476,11 +1648,16 @@ insert UUID into cache
 schedule re-broadcast of SAME UUID
 apply one local panic increment
 reset decay timer
+start this level's speech, buzzer, and LEDs
 ```
 
-Never generate a replacement UUID while relaying.
+If the device was in BOOT, leave BOOT as specified in section 27.
+
+Never generate a replacement UUID while relaying. One physical press creates one UUID. Every unit that has not seen it panics once and rebroadcasts that same UUID. A unit that already saw it does nothing, so the press raises each unit by one and then stops.
 
 ---
+
+
 
 # 38. Flooding/relay behavior
 
@@ -1505,6 +1682,8 @@ does not become an infinite loop.
 A returning copy is already in A's cache and is ignored.
 
 ---
+
+
 
 # 39. ESP-NOW retransmission
 
@@ -1531,6 +1710,8 @@ The jitter must be non-blocking.
 
 ---
 
+
+
 # 40. Simultaneous button presses
 
 Two people pressing two different machines produce two different UUIDs.
@@ -1547,21 +1728,20 @@ This is intentional.
 
 ---
 
+
+
 # 41. Events during BOOT / OVERLOAD / LOCKOUT
 
-Panic events are accepted only in NORMAL.
+New panic events are accepted in `BOOT` and `NORMAL`.
 
 During:
 
 ```text
-BOOT
 LEVEL5_SEQUENCE
 LOCKOUT
 ```
 
-local button presses and received panic events are ignored.
-
-For an ignored wireless event:
+the device is unresponsive to the button and to wifi. Local presses and received panic events are ignored:
 
 ```text
 do not increment
@@ -1569,9 +1749,15 @@ do not relay
 do not add UUID to cache
 ```
 
-This preserves the behavior of the physical button.
+The radio stays initialized. Packets that arrive during those two states are discarded.
+
+The event that caused the transition into `LEVEL5_SEQUENCE` has already been stored and transmitted. Only events that arrive after that transition are ignored.
+
+`LOCKOUT` lasts 60 seconds and is unresponsive for that entire time. The following BOOT is responsive again, as specified in section 27. The UUID cache is still intact.
 
 ---
+
+
 
 # 42. Level 5 overload sequence
 
@@ -1594,14 +1780,17 @@ SHLORP IS SCARED.
 SHUTTING DOWN SYSTEM.
 ```
 
+
+
 ## Mandarin-glitch
 
 Display:
 
 ```text
 恐慌过载
-SHLORP
 ```
+
+The device name is not shown on the OLED. It is spoken in the phrase below.
 
 Speech cue:
 
@@ -1610,6 +1799,8 @@ KONG HWANG GWO ZAI.
 SHLORP HIGH PAH LUH.
 JUNG ZAI GWAN JEE.
 ```
+
+
 
 ## Common behavior
 
@@ -1625,7 +1816,9 @@ LEDs:
 slow flashing
 ```
 
-Ignore all new events.
+Ignore all new button presses and wifi panics for this entire sequence. Do not increment, relay, or cache them.
+
+`PANIC_PROGRAM_MS` does not apply here. The sad buzzer and slow LED flash run for the whole sequence, then both turn off when lockout begins.
 
 Suggested minimum duration:
 
@@ -1633,20 +1826,24 @@ Suggested minimum duration:
 6000 ms
 ```
 
-Remain in overload until:
+Remain in overload until both of these are true:
 
-- minimum duration has elapsed,
-- overload speech has finished.
+- the minimum duration has elapsed,
+- the overload speech has finished.
 
 Then enter LOCKOUT.
 
 ---
+
+
 
 # 43. Buzzer patterns
 
 Use an active buzzer.
 
 ## Normal alarm, levels 1–4
+
+Run this only during the active `PANIC_PROGRAM_MS` window after an upward event. When that window ends, turn the buzzer off even if the pattern is mid-cycle. A new upward event starts the pattern over for a fresh 4000 ms.
 
 Example:
 
@@ -1658,7 +1855,11 @@ Example:
 repeat
 ```
 
+
+
 ## Level 5
+
+Run this for the whole overload sequence, not for `PANIC_PROGRAM_MS`. Turn the buzzer off for the entire lockout.
 
 Example:
 
@@ -1676,7 +1877,11 @@ No blocking delay.
 
 ---
 
+
+
 # 44. LED patterns
+
+
 
 ## Boot
 
@@ -1685,28 +1890,42 @@ alternating / happy chase
 200 ms steps
 ```
 
+
+
 ## Levels 1–2
+
+Run this only during the active `PANIC_PROGRAM_MS` window. When that window ends, turn both LEDs off. A new upward event starts the pattern for the level just reached.
 
 ```text
 300 ms ON
 300 ms OFF
 ```
 
+
+
 ## Levels 3–4
+
+Same 4-second window as levels 1–2, at the faster rate. A step from level 2 to level 3 during an active window switches to this rate and restarts the 4000 ms window.
 
 ```text
 100 ms ON
 100 ms OFF
 ```
 
+
+
 ## Level 5
+
+Run this for the whole overload sequence, then turn both LEDs off for lockout.
 
 ```text
 700 ms ON
 700 ms OFF
 ```
 
-## Level 0 / lockout
+
+
+## Level 0 / after the 4-second window / lockout
 
 ```text
 OFF
@@ -1716,6 +1935,8 @@ No blocking loops.
 
 ---
 
+
+
 # 45. One-minute lockout
 
 After overload:
@@ -1724,14 +1945,17 @@ After overload:
 LOCKOUT_MS = 60000
 ```
 
-During lockout:
+During lockout the device is unresponsive to every input:
 
 - button ignored,
 - wireless panic events ignored,
 - no relay,
+- do not add the UUID to the cache,
 - no speech,
 - buzzer off,
 - LEDs off.
+
+The UUID cache is kept. Lockout does not clear it.
 
 Display:
 
@@ -1754,11 +1978,13 @@ After 60 seconds:
 state = BOOT
 ```
 
-The next BOOT performs a new independent 10% language roll.
+The next BOOT performs a new independent 10% language roll. That BOOT is responsive: a press or a new UUID interrupts the greeting. The cache from before lockout is still there, so a UUID seen before overload is still a duplicate.
 
-No physical ESP8266 reset is required.
+No physical ESP8266 reset is required. A power loss is what clears the UUID cache.
 
 ---
+
+
 
 # 46. Display implementation
 
@@ -1787,6 +2013,8 @@ Chinese strings use a WQY/GB2312 font.
 
 ---
 
+
+
 # 47. Audio concurrency requirement
 
 While a WAV speech clip is playing, all of these must remain active:
@@ -1808,6 +2036,8 @@ The main loop must service audio frequently.
 No `delay()` in normal runtime logic.
 
 ---
+
+
 
 # 48. Main loop architecture
 
@@ -1839,6 +2069,8 @@ ESP-NOW callbacks must do minimal work.
 Callbacks should copy validated packet data into a small queue and return.
 
 ---
+
+
 
 # 49. Recommended source structure
 
@@ -1890,6 +2122,8 @@ Arduino CLI is acceptable if the same one-command workflow is preserved.
 
 ---
 
+
+
 # 50. Central configuration
 
 `config.h` should contain:
@@ -1934,6 +2168,8 @@ constexpr char DEVICE_NAME_SPEECH[] = "SHLORP";
 
 ---
 
+
+
 # 51. Suggested defaults
 
 ```text
@@ -1957,7 +2193,11 @@ TX_RELAY_JITTER_MAX_MS   = 40
 MANDARIN_GLITCH_PERCENT  = 10
 ```
 
+`PANIC_PROGRAM_MS` is the buzzer and LED window for levels 1–4 after each upward panic event. It is not a boot duration, not a speech duration, and not used by level 5. Boot uses its own 4000 ms minimum. Level 5 uses `LEVEL5_SEQUENCE_MS`.
+
 ---
+
+
 
 # 52. Serial/debug behavior
 
@@ -1995,6 +2235,8 @@ Debug logging must not materially disrupt audio timing.
 
 ---
 
+
+
 # 53. Hardware failure behavior
 
 If ESP-NOW initialization fails:
@@ -2014,6 +2256,8 @@ If OLED initialization fails, other subsystems continue.
 If audio initialization fails, visual/buzzer/network behavior continues.
 
 ---
+
+
 
 # 54. Firmware safety/resource rules
 
@@ -2040,6 +2284,8 @@ millis()-based state machines
 
 ---
 
+
+
 # 55. V1.1 acceptance criteria
 
 V1.1 is complete only when:
@@ -2057,86 +2303,114 @@ V1.1 is complete only when:
 9. Audio playback at intended volume does not reset the ESP8266.
 10. 470 uF supply capacitor is installed near audio amplifier.
 
+
+
 ## Naming
 
-11. Device name is controlled by exactly two user-facing strings:
-    - DEVICE_NAME
+1. Device name is controlled by exactly two user-facing strings:
+  - DEVICE_NAME
     - DEVICE_NAME_SPEECH
-12. Changing those strings and running the build tool regenerates appropriate speech.
-13. Boot speech says the device name.
-14. Level-5 speech says the device name.
+2. Changing those strings and running the build tool regenerates appropriate speech.
+3. Boot speech says the device name.
+4. Level-5 speech says the device name.
+
+
 
 ## Language glitch
 
-15. Every BOOT independently selects Mandarin-glitch mode with 10% probability.
-16. The selected language mode remains fixed for the whole session.
-17. Post-lockout BOOT performs a fresh roll.
-18. Mandarin-glitch mode displays valid predefined Chinese strings.
-19. Chinese characters render correctly on the SSD1306.
-20. Mandarin-glitch panic speech uses its predetermined alternate phrase.
-21. Mandarin-glitch overload includes the device name.
-22. No random Chinese Unicode characters are generated at runtime.
+1. Every BOOT independently selects Mandarin-glitch mode with 10% probability.
+2. The selected language mode remains fixed for the whole session.
+3. Post-lockout BOOT performs a fresh roll.
+4. Mandarin-glitch mode displays valid predefined Chinese strings.
+5. Chinese characters render correctly on the SSD1306.
+6. Mandarin-glitch panic speech uses its predetermined alternate phrase.
+7. Mandarin-glitch overload speech includes the device name. The OLED shows only `恐慌过载`.
+8. No random Chinese Unicode characters are generated at runtime.
+
+
 
 ## Panic behavior
 
-23. Level 0 shows ALL CLEAR / 一切正常.
-24. Upward press 0->1 triggers panic effects.
-25. Level 1 displays PANIC / 恐慌.
-26. Level 2 adds one exclamation mark.
-27. Level 3 adds another.
-28. Level 4 adds another.
-29. Levels 1–4 all play the appropriate three-repeat panic phrase.
-30. Levels 3–4 flash faster than levels 1–2.
-31. Decay is silent.
-32. Decay updates display to the lower level.
-33. Level 5 runs overload.
-34. Level 5 includes configured device name in speech.
-35. Level 5 enters approximately one-minute lockout.
-36. Lockout ignores local and network panic events.
-37. After lockout, device enters BOOT rather than hardware reset.
+1. Level 0 shows ALL CLEAR / 一切正常.
+2. Upward press 0->1 triggers panic effects.
+3. Level 1 displays PANIC / 恐慌.
+4. Level 2 adds one exclamation mark.
+5. Level 3 adds another.
+6. Level 4 adds another.
+7. Levels 1–4 all play the appropriate three-repeat panic phrase.
+8. Levels 3–4 flash faster than levels 1–2.
+9. Decay is silent.
+10. Decay updates display to the lower level.
+11. Level 5 runs overload.
+12. Level 5 includes configured device name in speech.
+13. Level 5 enters approximately one-minute lockout.
+14. Lockout ignores local and network panic events.
+15. After lockout, device enters BOOT rather than hardware reset.
+16. Levels 1–4 run the buzzer and panic LEDs for `PANIC_PROGRAM_MS` after each upward event, then turn them off while leaving the level text on screen.
+17. A new upward event during that window restarts the panic phrase and the 4-second window.
+18. A new panic during BOOT interrupts the greeting and is applied immediately. A duplicate UUID during BOOT does not.
+19. The overload show ignores the button and wifi, and does not cache events that arrive during the show.
+
+
 
 ## Audio/concurrency
 
-38. Speech is stored in firmware; no SD card.
-39. Speech playback is non-blocking/cooperative at runtime.
-40. LEDs continue animating while speech plays.
-41. Buzzer patterns continue while speech plays.
-42. ESP-NOW can receive while speech plays.
-43. ESP-NOW can relay while speech plays.
-44. Display remains responsive while speech plays.
-45. No runtime effect sequencing depends on long delay() calls.
+1. Speech is stored in firmware; no SD card.
+2. Speech playback is non-blocking/cooperative at runtime.
+3. LEDs continue animating while speech plays.
+4. Buzzer patterns continue while speech plays.
+5. ESP-NOW can receive while speech plays.
+6. ESP-NOW can relay while speech plays.
+7. Display remains responsive while speech plays.
+8. No runtime effect sequencing depends on long delay() calls.
+
+
 
 ## Network
 
-46. Physical button press generates a new 128-bit UUID.
-47. Origin stores UUID before broadcasting.
-48. New remote UUID is stored before relaying.
-49. Relay retains exact same UUID.
-50. Each UUID increments each device at most once.
-51. Duplicate UUIDs are dropped.
-52. Every unseen accepted UUID is relayed.
-53. Event can travel A -> B -> C when A cannot directly reach C.
-54. Two independent physical presses produce two increments.
-55. Received event resets decay timer.
-56. Events during BOOT/overload/lockout are not stored or relayed.
-57. UUID cache clears only after ten continuous minutes at NORMAL level 0.
-58. Cache has bounded fixed capacity.
-59. Cache overflow evicts oldest entry.
-60. Different group IDs ignore each other.
-61. No router or Internet is required.
+1. Physical button press generates a new 128-bit UUID.
+2. Origin stores UUID before broadcasting.
+3. New remote UUID is stored before relaying.
+4. Relay retains exact same UUID.
+5. Each UUID increments each device at most once.
+6. Duplicate UUIDs are dropped.
+7. Every unseen accepted UUID is relayed.
+8. Event can travel A -> B -> C when A cannot directly reach C.
+9. Two independent physical presses produce two increments.
+10. Received event resets decay timer.
+11. Events during overload and lockout are not stored or relayed. A new event during BOOT is stored, relayed, and applied immediately.
+12. UUID cache clears only after ten continuous minutes at NORMAL level 0. Overload, lockout, and the following BOOT do not clear it.
+13. Cache has bounded fixed capacity.
+14. Cache overflow evicts oldest entry.
+15. Different group IDs ignore each other.
+16. No router or Internet is required.
+
+
 
 ## Build/user workflow
 
-62. Repository includes one-command device build/upload helper.
-63. User can prepare another named unit by changing only the two name strings.
-64. Generated speech assets are recreated automatically.
-65. The final firmware and assets fit comfortably in 4 MB flash.
+1. Repository includes one-command device build/upload helper.
+2. User can prepare another named unit by changing only the two name strings.
+3. Generated speech assets are recreated automatically.
+4. The final firmware and assets fit comfortably in 4 MB flash.
 
 ---
 
+
+
 # 56. Instructions to the implementation agent
 
-Build V1.1 from the debugged v0.2/v1.0 logic, but treat this document as authoritative when behavior differs.
+Implement V1.1 from this document alone. v0.2 and v1.0 are not required.
+
+Behavior that must be implemented as written here:
+
+- `PANIC_PROGRAM_MS` is only the levels 1–4 buzzer and LED window.
+- The OLED keeps showing the current level after that window ends. Decay changes the screen and nothing else.
+- BOOT accepts a new press or a new UUID and abandons the greeting. Duplicates during BOOT do nothing.
+- `LEVEL5_SEQUENCE` and `LOCKOUT` ignore the button and wifi, and do not cache those events.
+- The UUID cache survives lockout and the soft boot after it.
+- A received panic rebroadcasts the same UUID. It does not mint a new one.
+- Mandarin overload shows only `恐慌过载` on the OLED. The device name is spoken.
 
 Required architectural decisions:
 
@@ -2168,6 +2442,8 @@ Required architectural decisions:
 - Do not introduce additional hardware unless absolutely necessary.
 
 ---
+
+
 
 # 57. Final shopping-search checklist
 
@@ -2203,6 +2479,8 @@ USB-C data cable
 All four boards should preferably use the same USB connector.
 
 ---
+
+
 
 # 58. Guiding experience
 
@@ -2247,3 +2525,4 @@ The finished object should still feel like a very simple toy:
 ONE BIG RED BUTTON.
 LOTS OF CONSEQUENCES.
 ```
+
