@@ -1,0 +1,4 @@
+.pio/
+build/
+tools/sam_renderer/sam
+test/test_panic
