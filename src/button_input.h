@@ -11,8 +11,9 @@ public:
 
 private:
     uint8_t pin_;
-    bool stableReleased_;
-    bool lastRaw_;
+    bool stablePressed_;
+    bool lastRawPressed_;
     uint32_t lastChangeMs_;
     bool pendingPress_;
+    bool baselineSet_;
 };

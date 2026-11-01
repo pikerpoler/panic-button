@@ -240,7 +240,6 @@ PanicOutputs PanicEngine::tick(uint32_t nowMs) {
 
     updateDecay(nowMs, out);
     updateEffectWindow(nowMs, out);
-    cache_.update(nowMs);
 
     out.state = state_;
     out.panicLevel = panicLevel_;

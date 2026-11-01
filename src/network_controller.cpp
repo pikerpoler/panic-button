@@ -1,6 +1,7 @@
 #include "network_controller.h"
 
 #include "config.h"
+#include "panic_debug.h"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -110,6 +111,7 @@ void NetworkController::pumpTransmit(uint32_t nowMs) {
 
         uint8_t broadcast[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         esp_now_send(broadcast, reinterpret_cast<uint8_t*>(&pkt), sizeof(pkt));
+        PANIC_LOG("[NET] TX");
 
         --job.sendsLeft;
         if (job.sendsLeft == 0) {

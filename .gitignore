@@ -1,4 +1,8 @@
 .pio/
 build/
 tools/sam_renderer/sam
+tools/sam_renderer/sam.o
+tools/sam_renderer/upstream/*.o
 test/test_panic
+.DS_Store
+.DS_Store

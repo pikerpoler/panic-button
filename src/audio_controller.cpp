@@ -46,7 +46,7 @@ static const uint8_t* clipData(SpeechClip clip, SessionLanguage lang, size_t* le
 
 bool AudioController::begin() {
     i2sOut = new AudioOutputI2S();
-    i2sOut->SetPinout(15, 3, 2);
+    i2sOut->SetPinout(15, 2, 3);
     i2sOut->SetGain(1.0);
     wavGen = new AudioGeneratorWAV();
     ready_ = true;

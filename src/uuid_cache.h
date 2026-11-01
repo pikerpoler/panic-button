@@ -16,7 +16,7 @@ public:
     void onEnterLevel0(uint32_t nowMs);
     void onLeaveLevel0();
     void onNonNormalState();
-    void update(uint32_t nowMs);
+    bool update(uint32_t nowMs);
 
 private:
     uint8_t entries_[SEEN_UUID_CAPACITY][16];

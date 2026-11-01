@@ -48,11 +48,13 @@ void UuidCache::onNonNormalState() {
     idleTimerActive_ = false;
 }
 
-void UuidCache::update(uint32_t nowMs) {
+bool UuidCache::update(uint32_t nowMs) {
     if (!idleTimerActive_ || count_ == 0) {
-        return;
+        return false;
     }
     if (nowMs - level0SinceMs_ >= UUID_CACHE_CLEAR_IDLE_MS) {
         clear();
+        return true;
     }
+    return false;
 }

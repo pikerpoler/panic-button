@@ -18,6 +18,9 @@ private:
     void handleNetworkRx(uint32_t nowMs);
     void generateUuid(uint8_t* out);
     bool rollMandarinGlitch();
+    void logBoot(bool mandarin) const;
+    void logUuidEvent(const uint8_t* uuid) const;
+    void trackPanicLevel(uint8_t newLevel);
 
     PanicEngine engine_;
     ButtonInput button_;
@@ -36,4 +39,5 @@ private:
     bool audioOk_;
     bool networkOk_;
     bool lockoutBootHandled_;
+    uint8_t lastPanicLevel_;
 };

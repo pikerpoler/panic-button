@@ -7,27 +7,34 @@
 void ButtonInput::begin(uint8_t pin) {
     pin_ = pin;
     pinMode(pin_, INPUT_PULLUP);
-    stableReleased_ = true;
-    lastRaw_ = true;
+    stablePressed_ = false;
+    lastRawPressed_ = false;
     lastChangeMs_ = 0;
     pendingPress_ = false;
+    baselineSet_ = false;
 }
 
 bool ButtonInput::update(uint32_t nowMs, bool rawPressed) {
-    if (rawPressed != lastRaw_) {
-        lastRaw_ = rawPressed;
+    if (!baselineSet_) {
+        lastRawPressed_ = rawPressed;
+        stablePressed_ = rawPressed;
+        lastChangeMs_ = nowMs;
+        baselineSet_ = true;
+        return pendingPress_;
+    }
+
+    if (rawPressed != lastRawPressed_) {
+        lastRawPressed_ = rawPressed;
         lastChangeMs_ = nowMs;
     }
+
     if ((nowMs - lastChangeMs_) >= BUTTON_DEBOUNCE_MS) {
-        const bool pressed = !lastRaw_;
-        if (pressed && stableReleased_) {
+        if (rawPressed && !stablePressed_) {
             pendingPress_ = true;
-            stableReleased_ = false;
         }
-        if (!pressed) {
-            stableReleased_ = true;
-        }
+        stablePressed_ = rawPressed;
     }
+
     return pendingPress_;
 }
 

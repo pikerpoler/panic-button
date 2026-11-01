@@ -1,8 +1,11 @@
 #include "device_state.h"
 
 #include "config.h"
+#include "device_config.h"
+#include "panic_debug.h"
 
 #include <Arduino.h>
+#include <stdio.h>
 
 void DeviceStateController::generateUuid(uint8_t* out) {
     for (int i = 0; i < 16; i += 4) {
@@ -18,6 +21,26 @@ void DeviceStateController::generateUuid(uint8_t* out) {
 
 bool DeviceStateController::rollMandarinGlitch() {
     return (ESP.random() % 10) == 0;
+}
+
+void DeviceStateController::logBoot(bool mandarin) const {
+    PANIC_LOG("[BOOT] device=%s", DEVICE_NAME);
+    PANIC_LOG("[BOOT] language=%s", mandarin ? "MANDARIN_GLITCH" : "ENGLISH");
+}
+
+void DeviceStateController::logUuidEvent(const uint8_t* uuid) const {
+    char hex[33];
+    for (int i = 0; i < 16; ++i) {
+        snprintf(hex + (i * 2), 3, "%02x", uuid[i]);
+    }
+    PANIC_LOG("[UUID] new event %s", hex);
+}
+
+void DeviceStateController::trackPanicLevel(uint8_t newLevel) {
+    if (newLevel != lastPanicLevel_) {
+        PANIC_LOG("[PANIC] level %u -> %u", lastPanicLevel_, newLevel);
+        lastPanicLevel_ = newLevel;
+    }
 }
 
 void DeviceStateController::setup() {
@@ -38,12 +61,14 @@ void DeviceStateController::setup() {
     }
 
     lockoutBootHandled_ = false;
+    lastPanicLevel_ = 0;
     ledMode_ = LedMode::BootChase;
     buzzerMode_ = BuzzerMode::Off;
     ledActive_ = true;
     buzzerActive_ = false;
 
     const bool mandarin = rollMandarinGlitch();
+    logBoot(mandarin);
     applyOutputs(engine_.startBootAfterLockout(millis(), mandarin), millis());
     if (!audioOk_) {
         engine_.setBootSpeechFinished(true);
@@ -53,6 +78,8 @@ void DeviceStateController::setup() {
 }
 
 void DeviceStateController::applyOutputs(const PanicOutputs& out, uint32_t nowMs) {
+    trackPanicLevel(out.panicLevel);
+
     if (out.displayDirty && displayOk_) {
         display_.markDirty();
     }
@@ -80,8 +107,18 @@ void DeviceStateController::applyOutputs(const PanicOutputs& out, uint32_t nowMs
 void DeviceStateController::handleNetworkRx(uint32_t nowMs) {
     PanicPacket pkt;
     while (network_.popReceived(pkt)) {
+        PANIC_LOG("[NET] RX");
+        if (!engine_.acceptsPanicInput()) {
+            continue;
+        }
         const bool isNew = !engine_.uuidCache().contains(pkt.uuid);
-        PanicOutputs out = engine_.onRemotePanic(nowMs, pkt.uuid, isNew);
+        if (!isNew) {
+            PANIC_LOG("[NET] duplicate -> drop");
+            continue;
+        }
+        PANIC_LOG("[NET] unseen -> relay");
+        logUuidEvent(pkt.uuid);
+        PanicOutputs out = engine_.onRemotePanic(nowMs, pkt.uuid, true);
         applyOutputs(out, nowMs);
     }
 }
@@ -96,8 +133,10 @@ void DeviceStateController::loop() {
 
     button_.update(nowMs, digitalRead(PIN_BUTTON) == LOW);
     if (button_.consumePress()) {
+        PANIC_LOG("[BUTTON] local panic");
         uint8_t uuid[16];
         generateUuid(uuid);
+        logUuidEvent(uuid);
         PanicOutputs out = engine_.onLocalPress(nowMs, uuid);
         applyOutputs(out, nowMs);
     }
@@ -119,6 +158,7 @@ void DeviceStateController::loop() {
     if (tickOut.requestPostLockoutBoot && !lockoutBootHandled_) {
         lockoutBootHandled_ = true;
         const bool mandarin = rollMandarinGlitch();
+        logBoot(mandarin);
         PanicOutputs bootOut = engine_.startBootAfterLockout(nowMs, mandarin);
         applyOutputs(bootOut, nowMs);
         if (audioOk_) {
@@ -130,6 +170,10 @@ void DeviceStateController::loop() {
     }
 
     applyOutputs(tickOut, nowMs);
+
+    if (engine_.uuidCache().update(nowMs)) {
+        PANIC_LOG("[CACHE] cleared after 10m at level 0");
+    }
 
     leds_.update(nowMs, ledMode_, ledActive_);
     buzzer_.update(nowMs, buzzerMode_, buzzerActive_);
